@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 )
 
 var fileNameRegex = regexp.MustCompile(`^[\w_\- ]+\.[\w]+$`)
@@ -19,6 +20,13 @@ func checkFileName(name string) error {
 		return errors.New("invalid file name")
 	}
 	return nil
+}
+
+func cleanPath(p string) string {
+	if strings.HasPrefix(p, "'") && strings.HasSuffix(p, "'") {
+		p = p[1 : len(p)-1]
+	}
+	return p
 }
 
 func getFileName(path string) string {

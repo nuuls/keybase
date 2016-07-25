@@ -212,7 +212,8 @@ func (c *client) handleInput(line string) {
 		case "m", "msg", "w":
 			c.queueMessage(spl[1], spl[2])
 		case "f", "file", "i":
-			file, err := encryptFile(spl[1], spl[2])
+			path := cleanPath(spl[2])
+			file, err := encryptFile(spl[1], path)
 			if err != nil {
 				log.Println(err)
 				return
@@ -222,7 +223,7 @@ func (c *client) handleInput(line string) {
 			header.Add("targetuser", strings.ToLower(spl[1]))
 			header.Add("command", FILE)
 			log.Println(spl[2])
-			header.Add("filename", getFileName(spl[2]))
+			header.Add("filename", getFileName(path))
 			c.queue(file, header)
 			log.Println("sent file", file.Name())
 		}
