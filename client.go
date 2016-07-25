@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -262,7 +263,12 @@ func (c *client) readInput() {
 			log.Println(err)
 		}
 		// remove "\n"
-		msg = msg[:len(msg)-2]
+		if runtime.GOOS == "windows" {
+			msg = msg[:len(msg)-2]
+		} else {
+			msg = msg[:len(msg)-1]
+		}
+
 		go c.handleInput(msg)
 	}
 }

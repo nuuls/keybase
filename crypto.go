@@ -46,7 +46,9 @@ func decrypt(rawMsg string) string {
 		log.Fatal(err)
 	}
 	notice := outErr.String()
-	notice = notice[:len(notice)-1] // remove newline
+	if len(notice) > 1 {
+		notice = notice[:len(notice)-1] // remove newline
+	}
 	msg := out.String()
 	msg = msg[:len(msg)-1] // remove newline
 	return fmt.Sprintf("%s: %s", notice, msg)
