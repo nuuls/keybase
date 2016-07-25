@@ -83,6 +83,7 @@ func decryptFile(fileName string, data io.Reader) error {
 		err = fmt.Errorf("error decrypting: %s", out.String())
 		return err
 	}
+	log.Println("saved file", outPath)
 	return err
 }
 

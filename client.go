@@ -24,25 +24,19 @@ const (
 	VERIFY  = "VERIFY"
 	KEY     = "KEY"
 	FILE    = "FILE"
+	SESSION = "SESSION"
 )
 
 const endl byte = '\u0003'
 
 var inputCmd = regexp.MustCompile(`\/[a-zA-z]+`)
 
-// type payload struct {
-// 	Key      string `json:"key"`
-// 	Command  string `json:"command"`
-// 	User     string `json:"user"`
-// 	Data     []byte `json:"data"`
-// 	Filename string `json:"file_name"`
-// }
-
 type client struct {
 	httpClient *http.Client
 	conn       net.Conn
 	user       string
 	key        chan string
+	sessionKey string
 }
 
 func (c *client) sendRaw(s string) {
@@ -101,29 +95,11 @@ func (c *client) queueMessage(user, msg string) {
 }
 
 func (c *client) queue(reader io.Reader, header http.Header) {
-	c.key = make(chan string)
-	c.sendRaw("KEY key")
-	ticker := time.NewTicker(time.Minute)
-	var k string
-	var ok bool
-	select {
-	case k, ok = <-c.key:
-		log.Println("got key", k)
-		close(c.key)
-	case <-ticker.C:
-		close(c.key)
-		ticker.Stop()
-	}
-	if !ok {
-		log.Println("server didnt respond in time")
-		return
-	}
-	c.key = nil
 	req, err := http.NewRequest(http.MethodPost, cfg.HTTPHost+"/keybase", reader)
 	if err != nil {
 		log.Fatal(err)
 	}
-	header.Add("key", k)
+	header.Add("session", c.sessionKey)
 	req.Header = header
 	res, err := c.httpClient.Do(req)
 	if err != nil {
@@ -153,6 +129,8 @@ func (c *client) handleMessage(line string) {
 		c.key <- msg
 	case FILE:
 		c.startFileSave(spl[1])
+	case SESSION:
+		c.sessionKey = spl[1]
 	case NOTICE:
 		log.Println(NOTICE, msg)
 	}
@@ -185,7 +163,6 @@ func (c *client) startFileSave(cmd string) {
 		log.Println(err)
 	}
 	decryptFile(fileName, res.Body)
-	//saveFile(fileName, res.Body)
 }
 
 func (c *client) upload(key, fileName string, file io.Reader) {
